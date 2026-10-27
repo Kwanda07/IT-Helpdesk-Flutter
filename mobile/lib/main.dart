@@ -849,14 +849,6 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   String? _selectedCategory;
   String? _selectedPriority;
 
-  final List<String> _categories = [
-    'Hardware',
-    'Software',
-    'Network',
-    'Account Access',
-    'Other',
-  ];
-
   final List<String> _priorities = [
     'Low',
     'Medium',
@@ -917,45 +909,68 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 children: [
 
                   // CATEGORY
-                  const Text(
-                    'Category',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                 const Text(
+  'Category',
+  style: TextStyle(
+    fontWeight: FontWeight.w600,
+  ),
+),
 
-                  const SizedBox(height: 8),
+const SizedBox(height: 8),
 
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCategory,
-                    decoration: const InputDecoration(
-                      hintText: 'Select Category',
-                      border: OutlineInputBorder(),
-                    ),
+FormField<String>(
+  initialValue: _selectedCategory,
 
-                    items: _categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return 'Please select a category';
+    }
+    return null;
+  },
 
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
+  builder: (field) {
+    return InkWell(
+      onTap: () async {
+        final selected = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                const CategorySelectionScreen(),
+          ),
+        );
 
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a category';
-                      }
-                      return null;
-                    },
-                  ),
+        if (!mounted) return;
 
-                  const SizedBox(height: 20),
+        if (selected != null) {
+          setState(() {
+            _selectedCategory = selected;
+          });
 
+          field.didChange(selected);
+        }
+      },
+
+      child: InputDecorator(
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          errorText: field.errorText,
+          suffixIcon: const Icon(Icons.chevron_right),
+        ),
+
+        child: Text(
+          field.value ?? 'Select Category',
+          style: TextStyle(
+            color: field.value == null
+                ? Colors.grey
+                : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  },
+),
+
+const SizedBox(height: 20),
                   // PRIORITY
                   const Text(
                     'Priority',
@@ -1125,4 +1140,112 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     );
   }
 }
+
+// =====================================================
+// CATEGORY SELECTION SCREEN
+// =====================================================
+
+class CategorySelectionScreen extends StatelessWidget {
+  const CategorySelectionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF0F2344);
+    const blue = Color(0xFF2563EB);
+
+    final categories = [
+      {'name': 'Hardware', 'icon': Icons.computer},
+      {'name': 'Software', 'icon': Icons.apps},
+      {'name': 'Network', 'icon': Icons.wifi},
+      {'name': 'Account Access', 'icon': Icons.lock_outline},
+      {'name': 'Other', 'icon': Icons.help_outline},
+    ];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+
+      appBar: AppBar(
+        backgroundColor: navy,
+        foregroundColor: Colors.white,
+        title: const Text('Select Category'),
+      ),
+
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+
+            children: [
+              const Text(
+                'What type of issue are you experiencing?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: navy,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Select the category that best describes your problem.',
+                style: TextStyle(color: Colors.grey),
+              ),
+
+              const SizedBox(height: 24),
+
+              ...categories.map((category) {
+                final name = category['name'] as String;
+                final icon = category['icon'] as IconData;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  color: Colors.white,
+                  elevation: 0,
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(
+                      color: Color(0xFFE2E8F0),
+                    ),
+                  ),
+
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+
+                    leading: Icon(
+                      icon,
+                      color: blue,
+                      size: 30,
+                    ),
+
+                    title: Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                    ),
+
+                    onTap: () {
+                      Navigator.pop(context, name);
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
 
