@@ -710,13 +710,22 @@ class HomeDashboard extends StatelessWidget {
     bool isPrimary = false,
   }) {
     return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title screen is coming soon.'),
-          ),
-        );
-      },
+     onTap: () {
+  if (title == 'Create Ticket') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CreateTicketScreen(),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title screen is coming soon.'),
+      ),
+    );
+  }
+},
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -812,6 +821,304 @@ class HomeDashboard extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =====================================================
+// CREATE TICKET SCREEN
+// =====================================================
+
+class CreateTicketScreen extends StatefulWidget {
+  const CreateTicketScreen({super.key});
+
+  @override
+  State<CreateTicketScreen> createState() =>
+      _CreateTicketScreenState();
+}
+
+class _CreateTicketScreenState extends State<CreateTicketScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  String? _selectedCategory;
+  String? _selectedPriority;
+
+  final List<String> _categories = [
+    'Hardware',
+    'Software',
+    'Network',
+    'Account Access',
+    'Other',
+  ];
+
+  final List<String> _priorities = [
+    'Low',
+    'Medium',
+    'High',
+  ];
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _submitTicket() {
+    if (_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ticket form validated. Backend connection coming soon.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF0F2344);
+    const blue = Color(0xFF2563EB);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+
+      appBar: AppBar(
+        backgroundColor: navy,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Create Ticket',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+
+            child: Form(
+              key: _formKey,
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+
+                  // CATEGORY
+                  const Text(
+                    'Category',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedCategory,
+                    decoration: const InputDecoration(
+                      hintText: 'Select Category',
+                      border: OutlineInputBorder(),
+                    ),
+
+                    items: _categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                    },
+
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a category';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // PRIORITY
+                  const Text(
+                    'Priority',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedPriority,
+                    decoration: const InputDecoration(
+                      hintText: 'Select Priority',
+                      border: OutlineInputBorder(),
+                    ),
+
+                    items: _priorities.map((priority) {
+                      return DropdownMenuItem(
+                        value: priority,
+                        child: Text(priority),
+                      );
+                    }).toList(),
+
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedPriority = value;
+                      });
+                    },
+
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select a priority';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ISSUE TITLE
+                  const Text(
+                    'Issue Title',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  TextFormField(
+                    controller: _titleController,
+
+                    decoration: const InputDecoration(
+                      hintText: 'Enter issue title',
+                      border: OutlineInputBorder(),
+                    ),
+
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'Please enter an issue title';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // DESCRIPTION
+                  const Text(
+                    'Description',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 5,
+
+                    decoration: const InputDecoration(
+                      hintText: 'Describe your issue in detail',
+                      border: OutlineInputBorder(),
+                      alignLabelWithHint: true,
+                    ),
+
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'Please describe the issue';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // SUBMIT BUTTON
+                  SizedBox(
+                    height: 50,
+
+                    child: ElevatedButton(
+                      onPressed: _submitTicket,
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: blue,
+                        foregroundColor: Colors.white,
+
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8),
+                        ),
+                      ),
+
+                      child: const Text(
+                        'Submit Ticket',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      // BOTTOM NAVIGATION
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        selectedItemColor: blue,
+        unselectedItemColor: Colors.grey,
+
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pop(context);
+          } else if (index == 2) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile screen is coming soon.'),
+              ),
+            );
+          }
+        },
+
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle_outline),
+            label: 'Create Ticket',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
           ),
         ],
       ),
