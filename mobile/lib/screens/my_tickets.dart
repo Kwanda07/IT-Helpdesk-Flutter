@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'ticket_details.dart';
 class MyTicketsScreen extends StatefulWidget {
   const MyTicketsScreen({super.key});
 
@@ -20,7 +20,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
 
     final response = await supabase
         .from('tickets')
-        .select('reference_number, title, priority, status, created_at')
+        .select('id, reference_number, title, description, priority, status, created_at')
         .eq('created_by', user.id)
         .order('created_at', ascending: false);
 
@@ -77,13 +77,17 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   ticket['priority']?.toString() ?? 'Medium';
               final status = ticket['status']?.toString() ?? 'Open';
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.confirmation_number_outlined,
-                    color: Color(0xFF102A43),
-                  ),
+             return Card(
+  margin: const EdgeInsets.only(bottom: 12),
+  child: ListTile(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TicketDetailsScreen(ticket: ticket),
+        ),
+      );
+    },
                   title: Text(
                     title,
                     style: const TextStyle(
