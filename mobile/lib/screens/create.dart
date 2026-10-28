@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'category.dart';
+
 // =====================================================
 // CREATE TICKET SCREEN
 // =====================================================
@@ -34,17 +36,69 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     super.dispose();
   }
 
-  void _submitTicket() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Ticket form validated. Backend connection coming soon.',
-          ),
-        ),
-      );
-    }
+  Future<void> _submitTicket() async {
+  if (!_formKey.currentState!.validate()) return;
+
+  final supabase = Supabase.instance.client;
+  final user = supabase.auth.currentUser;
+
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please log in before creating a ticket.'),
+      ),
+    );
+    return;
   }
+
+  final categoryIds = {
+    'Hardware': 1,
+    'Software': 2,
+    'Network': 3,
+    'Account Access': 4,
+    'Email': 5,
+    'Other': 6,
+  };
+
+  try {
+    await supabase.from('tickets').insert({
+      'title': _titleController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'category_id': categoryIds[_selectedCategory],
+      'priority': _selectedPriority,
+      'created_by': user.id,
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Ticket submitted successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    Navigator.pop(context);
+  } on PostgrestException catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Database error: ${error.message}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to submit ticket: $error'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
