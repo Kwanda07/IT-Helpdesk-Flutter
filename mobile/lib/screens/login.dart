@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../widgets/auth_layout.dart';
 import 'home.dart';
 import 'register.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 // LOGIN SCREEN
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,12 +26,39 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-  if (_formKey.currentState!.validate()) {
+  Future<void> _login() async {
+  if (!_formKey.currentState!.validate()) return;
+
+  try {
+    await Supabase.instance.client.auth.signInWithPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => const HomeDashboard(),
+      ),
+    );
+  } on AuthException catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Unable to log in. Please try again.'),
+        backgroundColor: Colors.red,
       ),
     );
   }

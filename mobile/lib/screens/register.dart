@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/auth_layout.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // REGISTRATION SCREEN
 class RegisterScreen extends StatefulWidget {
@@ -30,18 +31,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _register() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _register() async {
+  if (!_formKey.currentState!.validate()) return;
+
+  try {
+    final response = await Supabase.instance.client.auth.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      data: {
+        'full_name': _nameController.text.trim(),
+      },
+    );
+
+    if (!mounted) return;
+
+    if (response.user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Registration form validated. Backend connection coming soon.',
+            'Registration successful! Check your email for a confirmation link if required, then log in.',
           ),
+          backgroundColor: Colors.green,
         ),
       );
-    }
-  }
 
+      Navigator.pop(context);
+    }
+  } on AuthException catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration failed. Please try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
   @override
   Widget build(BuildContext context) {
     return AuthLayout(
