@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'create.dart'; // Temporary: CreateTicketScreen is still in main.dart
+import 'my_tickets.dart';
 // =====================================================
 // FLUTTER HOME DASHBOARD
 // =====================================================
@@ -166,13 +167,20 @@ class HomeDashboard extends StatelessWidget {
     return InkWell(
      onTap: () {
   if (title == 'Create Ticket') {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CreateTicketScreen(),
-      ),
-    );
-  } else {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const CreateTicketScreen(),
+    ),
+  );
+} else if (title == 'My Tickets') {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const MyTicketsScreen(),
+    ),
+  );
+} else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$title screen is coming soon.'),
