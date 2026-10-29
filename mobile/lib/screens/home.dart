@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'create.dart'; // Temporary: CreateTicketScreen is still in main.dart
+import 'create.dart';
 import 'my_tickets.dart';
+import 'track_ticket.dart';
+
 // =====================================================
 // FLUTTER HOME DASHBOARD
 // =====================================================
@@ -16,7 +18,7 @@ class HomeDashboard extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
 
-      // Bottom navigation
+      // BOTTOM NAVIGATION
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: blue,
@@ -24,11 +26,20 @@ class HomeDashboard extends StatelessWidget {
         onTap: (index) {
           if (index == 0) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('This screen is coming soon.'),
-            ),
-          );
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MyTicketsScreen(),
+              ),
+            );
+          } else if (index == 2) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile screen is coming soon.'),
+              ),
+            );
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -165,29 +176,30 @@ class HomeDashboard extends StatelessWidget {
     bool isPrimary = false,
   }) {
     return InkWell(
-     onTap: () {
-  if (title == 'Create Ticket') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const CreateTicketScreen(),
-    ),
-  );
-} else if (title == 'My Tickets') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const MyTicketsScreen(),
-    ),
-  );
-} else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$title screen is coming soon.'),
-      ),
-    );
-  }
-},
+      onTap: () {
+        if (title == 'Create Ticket') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CreateTicketScreen(),
+            ),
+          );
+        } else if (title == 'My Tickets') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyTicketsScreen(),
+            ),
+          );
+        } else if (title == 'Track Ticket') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const TrackTicketScreen(),
+            ),
+          );
+        }
+      },
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -196,7 +208,9 @@ class HomeDashboard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: isPrimary
               ? null
-              : Border.all(color: const Color(0xFFE2E8F0)),
+              : Border.all(
+                  color: const Color(0xFFE2E8F0),
+                ),
         ),
         child: Row(
           children: [
