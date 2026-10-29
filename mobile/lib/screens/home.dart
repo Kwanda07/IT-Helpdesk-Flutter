@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'create.dart';
 import 'my_tickets.dart';
 import 'track_ticket.dart';
@@ -8,14 +10,88 @@ import 'profile.dart';
 // FLUTTER HOME DASHBOARD
 // =====================================================
 
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const navy = Color(0xFF0F2344);
-    const blue = Color(0xFF2563EB);
+  State<HomeDashboard> createState() => _HomeDashboardState();
+}
 
+class _HomeDashboardState extends State<HomeDashboard> {
+  final supabase = Supabase.instance.client;
+
+  static const navy = Color(0xFF0F2344);
+  static const blue = Color(0xFF2563EB);
+
+  // =====================================================
+  // FETCH RECENT TICKETS FROM SUPABASE
+  // =====================================================
+
+  Future<List<Map<String, dynamic>>> _fetchRecentTickets() async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      return [];
+    }
+
+    final response = await supabase
+        .from('tickets')
+        .select(
+          'id, reference_number, title, status, created_at',
+        )
+        .eq('created_by', user.id)
+        .order('created_at', ascending: false)
+        .limit(5);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  // =====================================================
+  // STATUS COLOURS
+  // =====================================================
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'open':
+        return Colors.blue;
+
+      case 'in progress':
+        return Colors.orange;
+
+      case 'resolved':
+        return Colors.green;
+
+      case 'closed':
+        return Colors.grey;
+
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
+  // =====================================================
+  // OPEN ANOTHER SCREEN AND REFRESH WHEN RETURNING
+  // =====================================================
+
+  Future<void> _openScreen(Widget screen) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => screen,
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  // =====================================================
+  // DASHBOARD
+  // =====================================================
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
 
@@ -28,19 +104,9 @@ class HomeDashboard extends StatelessWidget {
           if (index == 0) return;
 
           if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const MyTicketsScreen(),
-              ),
-            );
+            _openScreen(const MyTicketsScreen());
           } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
-              ),
-            );
+            _openScreen(const ProfileScreen());
           }
         },
         items: const [
@@ -143,19 +209,73 @@ class HomeDashboard extends StatelessWidget {
 
                       const SizedBox(height: 14),
 
-                      // EXAMPLE ACTIVITY
-                      _activityTile(
-                        title: 'Laptop screen flickering',
-                        status: 'In Progress',
-                        statusColor: Colors.orange,
-                      ),
+                      // =====================================================
+                      // REAL RECENT ACTIVITY FROM SUPABASE
+                      // =====================================================
 
-                      const SizedBox(height: 10),
+                      FutureBuilder<List<Map<String, dynamic>>>(
+                        future: _fetchRecentTickets(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
 
-                      _activityTile(
-                        title: 'Printer connection issue',
-                        status: 'Resolved',
-                        statusColor: Colors.green,
+                          if (snapshot.hasError) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'Unable to load recent activity.',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final tickets = snapshot.data ?? [];
+
+                          if (tickets.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'No recent activity yet. '
+                                'Create a ticket to get started.',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: tickets.map((ticket) {
+                              final title =
+                                  ticket['title']?.toString() ??
+                                      'Untitled Ticket';
+
+                              final status =
+                                  ticket['status']?.toString() ??
+                                      'Open';
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: 10),
+                                child: _activityTile(
+                                  title: title,
+                                  status: status,
+                                  statusColor: _statusColor(status),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -168,7 +288,10 @@ class HomeDashboard extends StatelessWidget {
     );
   }
 
+  // =====================================================
   // REUSABLE DASHBOARD CARD
+  // =====================================================
+
   Widget _dashboardCard(
     BuildContext context, {
     required String title,
@@ -180,26 +303,11 @@ class HomeDashboard extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (title == 'Create Ticket') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateTicketScreen(),
-            ),
-          );
+          _openScreen(const CreateTicketScreen());
         } else if (title == 'My Tickets') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const MyTicketsScreen(),
-            ),
-          );
+          _openScreen(const MyTicketsScreen());
         } else if (title == 'Track Ticket') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const TrackTicketScreen(),
-            ),
-          );
+          _openScreen(const TrackTicketScreen());
         }
       },
       borderRadius: BorderRadius.circular(14),
@@ -219,7 +327,7 @@ class HomeDashboard extends StatelessWidget {
             Icon(
               icon,
               size: 30,
-              color: isPrimary ? Colors.white : blueColor(),
+              color: isPrimary ? Colors.white : blue,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -229,7 +337,9 @@ class HomeDashboard extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      color: isPrimary ? Colors.white : Colors.black87,
+                      color: isPrimary
+                          ? Colors.white
+                          : Colors.black87,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     ),
@@ -257,11 +367,10 @@ class HomeDashboard extends StatelessWidget {
     );
   }
 
-  Color blueColor() {
-    return const Color(0xFF2563EB);
-  }
-
+  // =====================================================
   // RECENT ACTIVITY CARD
+  // =====================================================
+
   Widget _activityTile({
     required String title,
     required String status,
@@ -280,7 +389,7 @@ class HomeDashboard extends StatelessWidget {
         children: [
           const Icon(
             Icons.confirmation_number_outlined,
-            color: Color(0xFF2563EB),
+            color: blue,
           ),
           const SizedBox(width: 12),
           Expanded(
