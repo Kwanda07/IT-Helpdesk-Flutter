@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class TicketDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> ticket;
 
@@ -6,6 +7,42 @@ class TicketDetailsScreen extends StatelessWidget {
     super.key,
     required this.ticket,
   });
+
+  // Format the date into South African date and time.
+  String _formatDate(dynamic value) {
+    if (value == null) return 'Not available';
+
+    try {
+      final date = DateTime.parse(value.toString())
+          .toUtc()
+          .add(const Duration(hours: 2));
+
+      const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+
+      final day = date.day;
+      final month = months[date.month - 1];
+      final year = date.year;
+      final hour = date.hour.toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+
+      return '$day $month $year, $hour:$minute';
+    } catch (e) {
+      return value.toString();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +63,10 @@ class TicketDetailsScreen extends StatelessWidget {
           _detailCard('Description', ticket['description']),
           _detailCard('Priority', ticket['priority']),
           _detailCard('Status', ticket['status']),
-          _detailCard('Date Created', ticket['created_at']),
+          _detailCard(
+            'Date Created',
+            _formatDate(ticket['created_at']),
+          ),
         ],
       ),
     );

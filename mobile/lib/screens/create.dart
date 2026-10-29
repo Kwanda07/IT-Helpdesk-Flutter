@@ -36,69 +36,79 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
     super.dispose();
   }
 
+  // =====================================================
+  // SUBMIT TICKET TO SUPABASE
+  // =====================================================
+
   Future<void> _submitTicket() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  final supabase = Supabase.instance.client;
-  final user = supabase.auth.currentUser;
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
 
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please log in before creating a ticket.'),
-      ),
-    );
-    return;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please log in before creating a ticket.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final categoryIds = {
+      'Hardware': 1,
+      'Software': 2,
+      'Network': 3,
+      'Account Access': 4,
+      'Email': 5,
+      'Other': 6,
+    };
+
+    try {
+      await supabase.from('tickets').insert({
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'category_id': categoryIds[_selectedCategory],
+        'priority': _selectedPriority,
+        'created_by': user.id,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ticket submitted successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context);
+    } on PostgrestException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Database error: ${error.message}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit ticket: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  final categoryIds = {
-    'Hardware': 1,
-    'Software': 2,
-    'Network': 3,
-    'Account Access': 4,
-    'Email': 5,
-    'Other': 6,
-  };
-
-  try {
-    await supabase.from('tickets').insert({
-      'title': _titleController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'category_id': categoryIds[_selectedCategory],
-      'priority': _selectedPriority,
-      'created_by': user.id,
-    });
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ticket submitted successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    Navigator.pop(context);
-  } on PostgrestException catch (error) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Database error: ${error.message}'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } catch (error) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to submit ticket: $error'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-}
+  // =====================================================
+  // BUILD SCREEN
+  // =====================================================
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +117,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // =====================================================
+      // APP BAR
+      // =====================================================
 
       appBar: AppBar(
         backgroundColor: navy,
@@ -120,6 +134,10 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         ),
       ),
 
+      // =====================================================
+      // BODY
+      // =====================================================
+
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -130,74 +148,89 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
             child: Form(
               key: _formKey,
 
+              // FIX: Automatically update validation errors
+              // when users correct their information.
+              autovalidateMode:
+                  AutovalidateMode.onUserInteraction,
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
 
+                  // =====================================================
                   // CATEGORY
-                 const Text(
-  'Category',
-  style: TextStyle(
-    fontWeight: FontWeight.w600,
-  ),
-),
+                  // =====================================================
 
-const SizedBox(height: 8),
+                  const Text(
+                    'Category',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
 
-FormField<String>(
-  initialValue: _selectedCategory,
+                  const SizedBox(height: 8),
 
-  validator: (value) {
-    if (value == null || value.isEmpty) {
-      return 'Please select a category';
-    }
-    return null;
-  },
+                  FormField<String>(
+                    initialValue: _selectedCategory,
 
-  builder: (field) {
-    return InkWell(
-      onTap: () async {
-        final selected = await Navigator.push<String>(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                const CategorySelectionScreen(),
-          ),
-        );
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a category';
+                      }
+                      return null;
+                    },
 
-        if (!mounted) return;
+                    builder: (field) {
+                      return InkWell(
+                        onTap: () async {
+                          final selected =
+                              await Navigator.push<String>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const CategorySelectionScreen(),
+                            ),
+                          );
 
-        if (selected != null) {
-          setState(() {
-            _selectedCategory = selected;
-          });
+                          if (!mounted) return;
 
-          field.didChange(selected);
-        }
-      },
+                          if (selected != null) {
+                            setState(() {
+                              _selectedCategory = selected;
+                            });
 
-      child: InputDecorator(
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          errorText: field.errorText,
-          suffixIcon: const Icon(Icons.chevron_right),
-        ),
+                            // Update category field validation.
+                            field.didChange(selected);
+                          }
+                        },
 
-        child: Text(
-          field.value ?? 'Select Category',
-          style: TextStyle(
-            color: field.value == null
-                ? Colors.grey
-                : Colors.black87,
-          ),
-        ),
-      ),
-    );
-  },
-),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            errorText: field.errorText,
+                            suffixIcon:
+                                const Icon(Icons.chevron_right),
+                          ),
 
-const SizedBox(height: 20),
+                          child: Text(
+                            field.value ?? 'Select Category',
+                            style: TextStyle(
+                              color: field.value == null
+                                  ? Colors.grey
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // =====================================================
                   // PRIORITY
+                  // =====================================================
+
                   const Text(
                     'Priority',
                     style: TextStyle(
@@ -209,13 +242,14 @@ const SizedBox(height: 20),
 
                   DropdownButtonFormField<String>(
                     initialValue: _selectedPriority,
+
                     decoration: const InputDecoration(
                       hintText: 'Select Priority',
                       border: OutlineInputBorder(),
                     ),
 
                     items: _priorities.map((priority) {
-                      return DropdownMenuItem(
+                      return DropdownMenuItem<String>(
                         value: priority,
                         child: Text(priority),
                       );
@@ -237,7 +271,10 @@ const SizedBox(height: 20),
 
                   const SizedBox(height: 20),
 
+                  // =====================================================
                   // ISSUE TITLE
+                  // =====================================================
+
                   const Text(
                     'Issue Title',
                     style: TextStyle(
@@ -266,7 +303,10 @@ const SizedBox(height: 20),
 
                   const SizedBox(height: 20),
 
+                  // =====================================================
                   // DESCRIPTION
+                  // =====================================================
+
                   const Text(
                     'Description',
                     style: TextStyle(
@@ -297,7 +337,10 @@ const SizedBox(height: 20),
 
                   const SizedBox(height: 32),
 
+                  // =====================================================
                   // SUBMIT BUTTON
+                  // =====================================================
+
                   SizedBox(
                     height: 50,
 
@@ -330,7 +373,10 @@ const SizedBox(height: 20),
         ),
       ),
 
+      // =====================================================
       // BOTTOM NAVIGATION
+      // =====================================================
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         selectedItemColor: blue,
@@ -342,7 +388,9 @@ const SizedBox(height: 20),
           } else if (index == 2) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Profile screen is coming soon.'),
+                content: Text(
+                  'Profile screen is coming soon.',
+                ),
               ),
             );
           }
