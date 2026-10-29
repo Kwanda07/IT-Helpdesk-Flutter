@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'create.dart';
 import 'my_tickets.dart';
 import 'track_ticket.dart';
+import 'profile.dart';
 
 // =====================================================
 // FLUTTER HOME DASHBOARD
@@ -34,9 +35,10 @@ class HomeDashboard extends StatelessWidget {
               ),
             );
           } else if (index == 2) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile screen is coming soon.'),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileScreen(),
               ),
             );
           }
