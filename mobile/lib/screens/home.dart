@@ -24,6 +24,45 @@ class _HomeDashboardState extends State<HomeDashboard> {
   static const blue = Color(0xFF2563EB);
 
   // =====================================================
+  // DYNAMIC GREETING
+  // =====================================================
+
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
+  // =====================================================
+  // GET LOGGED-IN USER NAME FROM SUPABASE
+  // =====================================================
+
+  String getUserName() {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      return 'User';
+    }
+
+    final metadata = user.userMetadata;
+
+    final name = metadata?['full_name'] ??
+        metadata?['name'] ??
+        user.email?.split('@').first ??
+        'User';
+
+    final firstName = name.toString().trim().split(' ').first;
+
+    return firstName.isEmpty ? 'User' : firstName;
+  }
+
+  // =====================================================
   // FETCH RECENT TICKETS FROM SUPABASE
   // =====================================================
 
@@ -95,7 +134,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB),
 
+      // =====================================================
       // BOTTOM NAVIGATION
+      // =====================================================
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: blue,
@@ -125,30 +167,37 @@ class _HomeDashboardState extends State<HomeDashboard> {
         ],
       ),
 
+      // =====================================================
+      // MAIN BODY
+      // =====================================================
+
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               children: [
-                // NAVY HEADER
+                // =====================================================
+                // NAVY HEADER WITH DYNAMIC GREETING
+                // =====================================================
+
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   color: navy,
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Good Morning, Thabo 👋',
-                        style: TextStyle(
+                        '${getGreeting()}, ${getUserName()} 👋',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 6),
-                      Text(
+                      const SizedBox(height: 6),
+                      const Text(
                         'How can we help you today?',
                         style: TextStyle(
                           color: Color(0xFFCBD5E1),
@@ -159,12 +208,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   ),
                 ),
 
+                // =====================================================
                 // DASHBOARD CONTENT
+                // =====================================================
+
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
+                      // =====================================================
                       // CREATE TICKET
+                      // =====================================================
+
                       _dashboardCard(
                         context,
                         title: 'Create Ticket',
@@ -176,7 +231,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
                       const SizedBox(height: 14),
 
+                      // =====================================================
                       // MY TICKETS
+                      // =====================================================
+
                       _dashboardCard(
                         context,
                         title: 'My Tickets',
@@ -187,7 +245,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
                       const SizedBox(height: 14),
 
+                      // =====================================================
                       // TRACK TICKET
+                      // =====================================================
+
                       _dashboardCard(
                         context,
                         title: 'Track Ticket',
@@ -197,6 +258,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       ),
 
                       const SizedBox(height: 26),
+
+                      // =====================================================
+                      // RECENT ACTIVITY HEADING
+                      // =====================================================
 
                       const Text(
                         'Recent Activity',
@@ -216,6 +281,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       FutureBuilder<List<Map<String, dynamic>>>(
                         future: _fetchRecentTickets(),
                         builder: (context, snapshot) {
+                          // LOADING
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return const Center(
@@ -226,6 +292,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                             );
                           }
 
+                          // ERROR
                           if (snapshot.hasError) {
                             return const Padding(
                               padding: EdgeInsets.all(16),
@@ -240,6 +307,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
                           final tickets = snapshot.data ?? [];
 
+                          // NO TICKETS
                           if (tickets.isEmpty) {
                             return const Padding(
                               padding: EdgeInsets.all(16),
@@ -254,6 +322,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                             );
                           }
 
+                          // DISPLAY RECENT TICKETS
                           return Column(
                             children: tickets.map((ticket) {
                               final title =
@@ -329,7 +398,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
               size: 30,
               color: isPrimary ? Colors.white : blue,
             ),
+
             const SizedBox(width: 16),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +415,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 5),
+
                   Text(
                     subtitle,
                     style: TextStyle(
@@ -357,6 +430,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 ],
               ),
             ),
+
             Icon(
               Icons.chevron_right,
               color: isPrimary ? Colors.white : Colors.grey,
@@ -391,7 +465,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
             Icons.confirmation_number_outlined,
             color: blue,
           ),
+
           const SizedBox(width: 12),
+
           Expanded(
             child: Text(
               title,
@@ -401,6 +477,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ),
             ),
           ),
+
           Text(
             status,
             style: TextStyle(
